@@ -13,7 +13,9 @@ export function TrackingTable({ columns, rows }) {
           {rows.map((row) => (
             <tr key={row.id}>
               {columns.map((col) => (
-                <td key={col.key}>{row[col.key]}</td>
+                // A column may supply render(row) for anything that is not
+                // plain text — a button, a chip, a formatted value.
+                <td key={col.key}>{col.render ? col.render(row) : row[col.key]}</td>
               ))}
             </tr>
           ))}

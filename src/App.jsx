@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { NavLink, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { LayoutGrid, Package, Users, Building2, Wrench, ClipboardList, Truck, LogOut, Menu, X } from "lucide-react";
 import xsysLogo from "../assets/XSYS network logo.avif";
 import { LoginScreen } from "./components/auth/LoginScreen.jsx";
@@ -9,6 +10,8 @@ import { InstallationsPage } from "./components/pages/InstallationsPage.jsx";
 import { ContractsPage } from "./components/pages/ContractsPage.jsx";
 import { ShipmentsPage } from "./components/pages/ShipmentsPage.jsx";
 import { VGOPage } from "./components/pages/VGOPage.jsx";
+import { fetchCurrentUser, logout } from "./api/auth.js";
+import { getToken, setUnauthorizedHandler } from "./api/client.js";
 
 const NAV = [
   { key: "installations", label: "Installations", icon: Wrench },
@@ -30,31 +33,13 @@ const PAGE_TITLES = {
   customers: "Customers",
 };
 
-const PAGE_COMPONENTS = {
-  installations: InstallationsPage,
-  rentals: RentalsPage,
-  contracts: ContractsPage,
-  shipments: ShipmentsPage,
-  vgo: VGOPage,
-  partners: PartnersPage,
-  customers: CustomersPage,
-};
-
-export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [currentPage, setCurrentPage] = useState("rentals");
+function AppLayout({ user, onSignOut }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { pathname } = useLocation();
 
-  if (!loggedIn) return <LoginScreen onLogin={() => setLoggedIn(true)} />;
-
+  const currentPage = pathname.split("/").filter(Boolean).pop();
   const navItem = NAV.find((item) => item.key === currentPage) ?? NAV[0];
   const CurrentPageIcon = navItem.icon;
-  const CurrentPageComponent = PAGE_COMPONENTS[currentPage];
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    setMobileMenuOpen(false);
-  };
 
   return (
     <div className="app-shell">
@@ -70,14 +55,15 @@ export default function App() {
           {NAV.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <NavLink
                 key={item.key}
-                className={`nav-item ${currentPage === item.key ? "nav-item-active" : ""}`}
-                onClick={() => handlePageChange(item.key)}
+                to={item.key}
+                className={({ isActive }) => `nav-item ${isActive ? "nav-item-active" : ""}`}
+                onClick={() => setMobileMenuOpen(false)}
               >
                 <Icon size={16} />
                 <span>{item.label}</span>
-              </button>
+              </NavLink>
             );
           })}
         </nav>
@@ -97,13 +83,13 @@ export default function App() {
               <div className="topbar-icon">
                 <CurrentPageIcon size={14} />
               </div>
-              {PAGE_TITLES[currentPage]}
+              {PAGE_TITLES[navItem.key]}
             </div>
           </div>
 
           <div className="topbar-actions">
-            <div className="topbar-user">j.tan · Operations</div>
-            <button className="header-signout" onClick={() => setLoggedIn(false)}>
+            <div className="topbar-user">{user?.displayName ?? user?.username}</div>
+            <button className="header-signout" onClick={onSignOut}>
               <LogOut size={14} />
               Logout
             </button>
@@ -111,11 +97,59 @@ export default function App() {
         </header>
 
         <div className="content">
-          <CurrentPageComponent />
+          <Outlet />
         </div>
       </main>
 
       {mobileMenuOpen && <div className="mobile-overlay" onClick={() => setMobileMenuOpen(false)} />}
     </div>
+  );
+}
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  // Undefined until we know: prevents the login screen flashing on reload
+  // while the stored token is being validated.
+  const [restoring, setRestoring] = useState(() => Boolean(getToken()));
+
+  useEffect(() => {
+    // Any 401 from anywhere in the app drops back to the login screen.
+    setUnauthorizedHandler(() => setUser(null));
+  }, []);
+
+  useEffect(() => {
+    if (!getToken()) return;
+    let cancelled = false;
+    fetchCurrentUser()
+      .then((u) => !cancelled && setUser(u))
+      .catch(() => {}) // client.js already cleared the bad token
+      .finally(() => !cancelled && setRestoring(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function handleSignOut() {
+    logout();
+    setUser(null);
+  }
+
+  if (restoring) return <div className="app-loading">Restoring session…</div>;
+  if (!user) return <LoginScreen onLogin={setUser} />;
+
+  return (
+    <Routes>
+      <Route element={<AppLayout user={user} onSignOut={handleSignOut} />}>
+        <Route index element={<Navigate to="rentals" replace />} />
+        <Route path="installations" element={<InstallationsPage />} />
+        <Route path="rentals" element={<RentalsPage />} />
+        <Route path="contracts" element={<ContractsPage />} />
+        <Route path="shipments" element={<ShipmentsPage />} />
+        <Route path="vgo" element={<VGOPage />} />
+        <Route path="partners" element={<PartnersPage />} />
+        <Route path="customers" element={<CustomersPage />} />
+        <Route path="*" element={<Navigate to="rentals" replace />} />
+      </Route>
+    </Routes>
   );
 }

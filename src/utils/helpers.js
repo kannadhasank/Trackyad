@@ -1,13 +1,3 @@
-import { CUSTOMERS, PARTNERS } from "../data/mockData.js";
-
-export function customerFor(id) {
-  return CUSTOMERS.find((c) => c.id === id);
-}
-
-export function partnerFor(id) {
-  return PARTNERS.find((p) => p.id === id);
-}
-
 export function fmtDate(d) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-GB", {
     day: "2-digit",

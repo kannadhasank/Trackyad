@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { X, Building2, Users, Package, Hash, MapPin, Calendar, FileText } from "lucide-react";
-import { CUSTOMERS, PARTNERS } from "../../data/mockData.js";
 
 const EMPTY_FORM = {
   customerId: "",
@@ -15,16 +14,26 @@ const EMPTY_FORM = {
   status: "active",
 };
 
-export function NewRentalModal({ onClose, onSave }) {
+export function NewRentalModal({ customers = [], partners = [], onClose, onSave }) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSave(form);
+    setError(null);
+    setBusy(true);
+    try {
+      await onSave(form);
+    } catch (err) {
+      // Keep the modal open with the user's input intact on a failed save.
+      setError(err.message);
+      setBusy(false);
+    }
   }
 
   return (
@@ -48,7 +57,7 @@ export function NewRentalModal({ onClose, onSave }) {
                   onChange={(e) => set("customerId", e.target.value)}
                 >
                   <option value="">Select customer…</option>
-                  {CUSTOMERS.map((c) => (
+                  {customers.map((c) => (
                     <option key={c.id} value={c.id}>{c.company}</option>
                   ))}
                 </select>
@@ -61,7 +70,7 @@ export function NewRentalModal({ onClose, onSave }) {
                   onChange={(e) => set("partnerId", e.target.value)}
                 >
                   <option value="">Select partner…</option>
-                  {PARTNERS.map((p) => (
+                  {partners.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
@@ -157,9 +166,13 @@ export function NewRentalModal({ onClose, onSave }) {
             </label>
           </div>
 
+          {error && <div className="form-error">{error}</div>}
+
           <div className="modal-footer">
             <button type="button" className="btn-ghost" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-primary">Create rental</button>
+            <button type="submit" className="btn-primary" disabled={busy}>
+              {busy ? "Creating…" : "Create rental"}
+            </button>
           </div>
         </form>
       </div>

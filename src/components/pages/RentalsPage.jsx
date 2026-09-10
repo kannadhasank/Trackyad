@@ -1,48 +1,75 @@
-import { useState, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Search, Plus } from "lucide-react";
-import { RENTALS, STATUS } from "../../data/mockData.js";
+import { STATUS } from "../../data/mockData.js";
 import { Dashboard } from "./Dashboard.jsx";
 import { NewRentalModal } from "../modals/NewRentalModal.jsx";
 import { AssetTag } from "../shared/AssetTag.jsx";
+import { createRental, listRentals } from "../../api/rentals.js";
+import { listCustomers, listPartners } from "../../api/directory.js";
 
 export function RentalsPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
-  const [rentals, setRentals] = useState(RENTALS);
+  const [rentals, setRentals] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // Bumped after a create, to re-run the fetch below.
+  const [reloadKey, setReloadKey] = useState(0);
 
-  function handleSave(form) {
-    const lastId = rentals.reduce((max, r) => {
-      const n = parseInt(r.id.replace("RNT-", ""), 10);
-      return n > max ? n : max;
-    }, 0);
-    const newRental = {
-      ...form,
-      id: `RNT-${lastId + 1}`,
-      devicePartNumber: form.partNumber,
-      contractNumber: `CTR-${Math.floor(55000 + Math.random() * 1000)}`,
-      contractStart: form.rentalStart,
-      contractEnd: form.endDate,
-      sla: "Next business day",
+  // The modal's dropdowns need these; fetched once.
+  useEffect(() => {
+    Promise.all([listCustomers(), listPartners()])
+      .then(([c, p]) => {
+        setCustomers(c);
+        setPartners(p);
+      })
+      .catch((err) => setError(err.message));
+  }, []);
+
+  // Filtering and search happen server-side, so this re-runs when either changes.
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    // Debounce so typing does not fire a request per keystroke.
+    const timer = setTimeout(() => {
+      listRentals({ status: filter, q: query })
+        .then((data) => {
+          if (cancelled) return;
+          setRentals(data);
+          setError(null);
+        })
+        .catch((err) => !cancelled && setError(err.message))
+        .finally(() => !cancelled && setLoading(false));
+    }, query ? 250 : 0);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
     };
-    setRentals((prev) => [...prev, newRental]);
-    setShowModal(false);
-  }
+  }, [query, filter, reloadKey]);
 
-  const filtered = useMemo(() => {
-    return rentals.filter((r) => {
-      if (filter !== "all" && r.status !== filter) return false;
-      if (!query) return true;
-      const cust = rentals.find((rental) => rental.customerId)?.customerId ?? "";
-      const hay = `${r.id} ${r.serialNumber} ${r.partNumber} ${cust}`.toLowerCase();
-      return hay.includes(query.toLowerCase());
-    });
-  }, [query, filter, rentals]);
+  const handleSave = useCallback(async (form) => {
+    // id, contract fields and sla are derived by the API now.
+    await createRental(form);
+    setShowModal(false);
+    setReloadKey((k) => k + 1);
+  }, []);
 
   return (
     <div>
-      {showModal && <NewRentalModal onClose={() => setShowModal(false)} onSave={handleSave} />}
-      <Dashboard />
+      {showModal && (
+        <NewRentalModal
+          customers={customers}
+          partners={partners}
+          onClose={() => setShowModal(false)}
+          onSave={handleSave}
+        />
+      )}
+      <Dashboard reloadKey={reloadKey} />
 
       <div className="toolbar">
         <div className="search-box">
@@ -69,14 +96,21 @@ export function RentalsPage() {
         </button>
       </div>
 
-      <div className="tag-grid">
-        {filtered.map((r) => (
-          <AssetTag key={r.id} rental={r} />
-        ))}
-        {filtered.length === 0 && (
-          <div className="empty-state">No rentals match this search.</div>
-        )}
-      </div>
+      {error && <div className="empty-state">{error}</div>}
+
+      {!error && (
+        <div className="tag-grid">
+          {rentals.map((r) => (
+            <AssetTag key={r.id} rental={r} />
+          ))}
+          {loading && rentals.length === 0 && (
+            <div className="empty-state">Loading rentals…</div>
+          )}
+          {!loading && rentals.length === 0 && (
+            <div className="empty-state">No rentals match this search.</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

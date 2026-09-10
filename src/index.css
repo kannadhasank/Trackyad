@@ -249,6 +249,7 @@ input {
   font-weight: 500;
   cursor: pointer;
   text-align: left;
+  text-decoration: none;
   transition: background 0.12s ease, color 0.12s ease;
 }
 
@@ -769,6 +770,98 @@ input {
   grid-column: 1 / -1;
   text-align: center;
   padding: 60px 20px;
+  color: var(--paper-dim);
+  font-size: 13.5px;
+}
+
+/* Failed login / failed save — surfaces the API's error message. */
+.form-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--red);
+  border-radius: 4px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 13px;
+}
+
+/* File picker — the real <input type="file"> is hidden behind this. */
+.file-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.file-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.file-picker-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel-raised);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.file-picker-clear {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: var(--paper-dim);
+  cursor: pointer;
+  padding: 0;
+}
+
+.file-picker-clear:hover {
+  color: var(--red);
+}
+
+.file-picker-hint {
+  color: var(--paper-dim);
+  font-size: 12px;
+}
+
+/* Download link inside a table cell. */
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--amber);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.cell-muted {
+  color: #5b6b71;
+}
+
+/* Shown while a stored token is being validated on page load. */
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
   color: var(--paper-dim);
   font-size: 13.5px;
 }

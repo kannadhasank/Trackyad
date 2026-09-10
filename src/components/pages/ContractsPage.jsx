@@ -35,7 +35,7 @@ export function ContractsPage() {
           { key: "contractStartDate", label: "Contract start" },
           { key: "contractEndDate", label: "Contract end" },
           { key: "sla", label: "SLA" },
-          { key: "address", label: "Address" },
+          { key: "address", label: "Installation Address" },
           { key: "quotationNumber", label: "Quotation no." },
           { key: "poNumber", label: "PO no." },
           { key: "invoiceNumber", label: "Invoice no." },

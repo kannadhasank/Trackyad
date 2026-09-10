@@ -1,11 +1,12 @@
 import { Hash, Building2, MapPin, Users, ChevronRight, FileText } from "lucide-react";
-import { customerFor, partnerFor, fmtDate, daysUntil } from "../../utils/helpers.js";
+import { fmtDate, daysUntil } from "../../utils/helpers.js";
 import { STATUS, PAYMENT_STATUS } from "../../data/mockData.js";
 import { StatusChip } from "./StatusChip.jsx";
 
 export function AssetTag({ rental }) {
-  const cust = customerFor(rental.customerId);
-  const partner = partnerFor(rental.partnerId);
+  // The API embeds these via a SQL join, so no client-side lookup is needed.
+  const cust = rental.customer;
+  const partner = rental.partner;
   const st = STATUS[rental.status];
   const pay = PAYMENT_STATUS[rental.paymentStatus];
   const left = daysUntil(rental.endDate);

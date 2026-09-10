@@ -1,9 +1,25 @@
+import { useEffect, useState } from "react";
 import { MapPin, Mail, Phone } from "lucide-react";
 import { Plus } from "lucide-react";
-import { PARTNERS, RENTALS } from "../../data/mockData.js";
 import { StatusChip } from "../shared/StatusChip.jsx";
+import { listPartners } from "../../api/directory.js";
 
 export function PartnersPage() {
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    listPartners()
+      .then((data) => !cancelled && setPartners(data))
+      .catch((err) => !cancelled && setError(err.message))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div>
       <div className="section-head">
@@ -19,8 +35,7 @@ export function PartnersPage() {
           <span>Contact</span>
           <span>Fleet</span>
         </div>
-        {PARTNERS.map((p) => {
-          const count = RENTALS.filter((r) => r.partnerId === p.id).length;
+        {partners.map((p) => {
           return (
             <div className="ledger-row" key={p.id}>
               <div className="ledger-main">
@@ -47,11 +62,16 @@ export function PartnersPage() {
                 </div>
               </div>
               <div className="ledger-cell">
-                <StatusChip tone="neutral">{count} units</StatusChip>
+                <StatusChip tone="neutral">{p.rentalCount} units</StatusChip>
               </div>
             </div>
           );
         })}
+        {loading && <div className="empty-state">Loading partners…</div>}
+        {error && <div className="empty-state">{error}</div>}
+        {!loading && !error && partners.length === 0 && (
+          <div className="empty-state">No partners yet.</div>
+        )}
       </div>
     </div>
   );
