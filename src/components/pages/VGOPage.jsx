@@ -28,9 +28,9 @@ export function VGOPage() {
     <div>
       {showModal && <NewVGOModal onClose={() => setShowModal(false)} onSave={handleSave} />}
       <div className="section-head">
-        <h2>VGO inventory tracking</h2>
+        <h2>inventory tracking</h2>
         <button className="btn-primary btn-add" onClick={() => setShowModal(true)}>
-          <Plus size={15} /> New VGO item
+          <Plus size={15} /> New item
         </button>
       </div>
       <div className="toolbar">
@@ -45,7 +45,7 @@ export function VGOPage() {
       </div>
       <TrackingTable
         columns={[
-          { key: "id", label: "VGO ID" },
+          { key: "id", label: "ID" },
           { key: "customerName", label: "Customer name" },
           { key: "partNumber", label: "Part number" },
           { key: "serialNumber", label: "S/N" },

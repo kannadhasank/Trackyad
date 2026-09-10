@@ -46,13 +46,15 @@ export function ShipmentsPage() {
       <TrackingTable
         columns={[
           { key: "id", label: "Shipment ID" },
+          { key: "customer", label: "Customer" },
+          { key: "shipTo", label: "Ship to" },
           { key: "awbNumber", label: "AWB number" },
           { key: "carrier", label: "Carrier" },
-          { key: "shipTo", label: "Ship to" },
           { key: "shippingDate", label: "Shipping date" },
+          { key: "status", label: "Status" },
           { key: "receivedDate", label: "Received date" },
-          { key: "customer", label: "Customer" },
           { key: "receivedBy", label: "Received by" },
+          { key: "pod", label: "POD" },
         ]}
         rows={filtered}
       />
