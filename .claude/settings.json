@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)"
+    ]
+  },
+  "skills": {
+    "architecture-summary": {
+      "enabled": true,
+      "description": "View a comprehensive summary of Trackyad's architecture and structure"
+    }
+  }
+}
